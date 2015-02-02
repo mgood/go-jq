@@ -90,138 +90,116 @@ func TestTransformArrayJson(t *testing.T) {
 
 // TODO KIND_INVALID
 
-func TestJVNull(t *testing.T) {
-	result := NewJV("null").ToGo()
-	equals(t, nil, result)
-}
-
-func TestJVTrue(t *testing.T) {
-	result := NewJV("true").ToGo()
-	equals(t, true, result)
-}
-
-func TestJVFalse(t *testing.T) {
-	result := NewJV("false").ToGo()
-	equals(t, false, result)
-}
-
-func TestJVInt(t *testing.T) {
-	result := NewJV("42").ToGo()
-	equals(t, 42, result)
-}
-
-func TestJVFloat(t *testing.T) {
-	result := NewJV("38.6").ToGo()
-	equals(t, 38.6, result)
-}
-
-func TestJVString(t *testing.T) {
-	result := NewJV("\"foo\"").ToGo()
-	equals(t, "foo", result)
-}
-
-func TestJVArray(t *testing.T) {
-	result := NewJV("[1, 2, 3]").ToGo()
-	expected := []interface{}{1, 2, 3}
+func assertJsonParsed(t *testing.T, expected interface{}, json string) {
+	result := jvToGo(parseJson(json))
 	equals(t, expected, result)
 }
 
+func TestJVNull(t *testing.T) {
+	assertJsonParsed(t, nil, "null")
+}
+
+func TestJVTrue(t *testing.T) {
+	assertJsonParsed(t, true, "true")
+}
+
+func TestJVFalse(t *testing.T) {
+	assertJsonParsed(t, false, "false")
+}
+
+func TestJVInt(t *testing.T) {
+	assertJsonParsed(t, 42, "42")
+}
+
+func TestJVFloat(t *testing.T) {
+	assertJsonParsed(t, 38.6, "38.6")
+}
+
+func TestJVString(t *testing.T) {
+	assertJsonParsed(t, "foo", "\"foo\"")
+}
+
+func TestJVArray(t *testing.T) {
+	expected := []interface{}{1, 2, 3}
+	assertJsonParsed(t, expected, "[1, 2, 3]")
+}
+
 func TestJVObject(t *testing.T) {
-	result := NewJV("{\"x\": 1, \"y\": \"two\"}").ToGo()
+	json := "{\"x\": 1, \"y\": \"two\"}"
 	expected := map[string]interface{}{
 		"x": 1,
 		"y": "two",
 	}
-	equals(t, expected, result)
+	assertJsonParsed(t, expected, json)
+}
+
+func assertGoJvConversion(t *testing.T, expected interface{}, value interface{}) {
+	actual := jvToGo(goToJv(value))
+	equals(t, expected, actual)
 }
 
 func TestJVFromGoNil(t *testing.T) {
-	jv := NewJVFromGo(nil)
-	equals(t, nil, jv.ToGo())
+	assertGoJvConversion(t, nil, nil)
 }
 
 func TestJVFromGoTrue(t *testing.T) {
-	expected := true
-	jv := NewJVFromGo(expected)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, true, true)
 }
 
 func TestJVFromGoFalse(t *testing.T) {
-	expected := false
-	jv := NewJVFromGo(expected)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, false, false)
 }
 
 // Ints
 
 func TestJVFromGoInt(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(expected)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, 1)
 }
 
 func TestJVFromGoInt8(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(int8(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, int8(1))
 }
 
 func TestJVFromGoInt16(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(int16(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, int16(1))
 }
 
 func TestJVFromGoInt32(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(int32(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, int32(1))
 }
 
 func TestJVFromGoInt64(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(int64(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, int64(1))
 }
 
 // Uints
 
 func TestJVFromGoUInt(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(uint(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, uint(1))
 }
 
 func TestJVFromGoUInt8(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(uint8(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, uint8(1))
 }
 
 func TestJVFromGoUInt16(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(uint16(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, uint16(1))
 }
 
 func TestJVFromGoUInt32(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(uint32(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, uint32(1))
 }
 
 func TestJVFromGoUInt64(t *testing.T) {
-	expected := 1
-	jv := NewJVFromGo(uint64(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1, uint64(1))
 }
 
 // Floats
 
 func TestJVFromGoFloat32(t *testing.T) {
 	expected := 1.2
-	jv := NewJVFromGo(float32(expected))
-	actual := jv.ToGo().(float64)
+	jv := goToJv(float32(expected))
+	actual := jvToGo(jv).(float64)
 
 	// allow for some error due to precision conversion
 	if math.Abs(expected-actual) > 0.001 {
@@ -230,15 +208,11 @@ func TestJVFromGoFloat32(t *testing.T) {
 }
 
 func TestJVFromGoFloat64(t *testing.T) {
-	expected := 1.1
-	jv := NewJVFromGo(float64(expected))
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, 1.1, float64(1.1))
 }
 
 func TestJVFromGoString(t *testing.T) {
-	expected := "foobar"
-	jv := NewJVFromGo(expected)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, "foobar", "foobar")
 }
 
 // Arrays & Slices
@@ -246,31 +220,24 @@ func TestJVFromGoString(t *testing.T) {
 func TestJVFromGoArray(t *testing.T) {
 	expected := []interface{}{1, 2, 3}
 	asArray := [3]interface{}{1, 2, 3}
-
-	jv := NewJVFromGo(&asArray)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, expected, asArray)
 }
 
 func TestJVFromGoIntArray(t *testing.T) {
 	expected := []interface{}{1, 2, 3}
 	asArray := [3]int{1, 2, 3}
-
-	jv := NewJVFromGo(&asArray)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, expected, asArray)
 }
 
 func TestJVFromGoSlice(t *testing.T) {
 	expected := []interface{}{1, 2, 3}
-	jv := NewJVFromGo(expected)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, expected, expected)
 }
 
 func TestJVFromGoIntSlice(t *testing.T) {
 	expected := []interface{}{1, 2, 3}
 	asInts := []int{1, 2, 3}
-
-	jv := NewJVFromGo(asInts)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, expected, asInts)
 }
 
 // Objects
@@ -280,14 +247,12 @@ func TestJVFromGoObject(t *testing.T) {
 		"x": 1,
 		"y": "two",
 	}
-	jv := NewJVFromGo(expected)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, expected, expected)
 }
 
 // Pointers
 
 func TestJVFromGoIntPointer(t *testing.T) {
 	expected := 1
-	jv := NewJVFromGo(&expected)
-	equals(t, expected, jv.ToGo())
+	assertGoJvConversion(t, expected, &expected)
 }

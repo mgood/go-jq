@@ -13,12 +13,12 @@ import (
 type JQ struct {
 	program   string
 	state     *C.jq_state
-	lastValue *JV
+	lastValue C.jv
 }
 
 func NewJQ(program string) (*JQ, error) {
 	state := C.jq_init()
-	jq := &JQ{program, state, nil}
+	jq := &JQ{program, state, C.jv_invalid()}
 	if err := jq.compile(program); err != nil {
 		return nil, err
 	}
@@ -26,25 +26,25 @@ func NewJQ(program string) (*JQ, error) {
 }
 
 func (jq *JQ) Handle(value interface{}) {
-	jq.start(NewJVFromGo(value))
+	jq.start(goToJv(value))
 }
 
 func (jq *JQ) HandleJson(text string) {
-	jq.start(NewJV(text))
+	jq.start(parseJson(text))
 }
 
 func (jq *JQ) Next() bool {
 	// FIXME this raises assertion if called before start()
 	jq.lastValue = jq.next()
-	return jq.lastValue.isValid()
+	return isValid(jq.lastValue)
 }
 
 func (jq *JQ) Value() interface{} {
-	return jq.lastValue.ToGo()
+	return jvToGo(jq.lastValue)
 }
 
 func (jq *JQ) ValueJson() string {
-	return jq.lastValue.ToJson()
+	return dumpJson(jq.lastValue)
 }
 
 // JQ APIs
@@ -54,17 +54,12 @@ func (jq *JQ) compile(program string) error {
 	return nil
 }
 
-func (jq *JQ) compileArgs(program string, args *JV) {
-	C.jq_compile_args(jq.state, C.CString(program), args.value)
+func (jq *JQ) start(jv C.jv) {
+	C.jq_start(jq.state, jv, 0)
 }
 
-func (jq *JQ) start(jv *JV) {
-	C.jq_start(jq.state, jv.value, 0)
-}
-
-func (jq *JQ) next() *JV {
-	jv := JV{C.jq_next(jq.state)}
-	return &jv
+func (jq *JQ) next() C.jv {
+	return C.jq_next(jq.state)
 }
 
 func (jq *JQ) teardown() {
@@ -73,32 +68,15 @@ func (jq *JQ) teardown() {
 
 // JSON values
 
-type JV struct {
-	value C.jv
+func parseJson(value string) C.jv {
+	return C.jv_parse(C.CString(value))
 }
 
-func NewJV(value string) *JV {
-	parsed := C.jv_parse(C.CString(value))
-	return &JV{parsed}
-}
-
-func NewJVFromGo(value interface{}) *JV {
-	return &JV{goToJv(value)}
-}
-
-func (jv *JV) Copy() *JV {
-	return &JV{C.jv_copy(jv.value)}
-}
-
-func (jv *JV) ToJson() string {
-	strJv := C.jv_dump_string(jv.value, 0)
+func dumpJson(jv C.jv) string {
+	strJv := C.jv_dump_string(jv, 0)
 	result := C.jv_string_value(strJv)
 	C.jv_free(strJv)
 	return C.GoString(result)
-}
-
-func (jv *JV) ToGo() interface{} {
-	return jvToGo(jv.value)
 }
 
 func goToJv(v interface{}) C.jv {
@@ -188,6 +166,6 @@ func jvToGo(value C.jv) interface{} {
 	}
 }
 
-func (jv *JV) isValid() bool {
-	return C.jv_is_valid(jv.value) != 0
+func isValid(jv C.jv) bool {
+	return C.jv_is_valid(jv) != 0
 }
