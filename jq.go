@@ -20,6 +20,7 @@ func NewJQ(program string) (*JQ, error) {
 	state := C.jq_init()
 	jq := &JQ{program, state, C.jv_invalid()}
 	if err := jq.compile(program); err != nil {
+		jq.Close()
 		return nil, err
 	}
 	return jq, nil
