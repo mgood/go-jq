@@ -39,12 +39,15 @@ func equals(tb testing.TB, exp, act interface{}) {
 func TestJQProgram(t *testing.T) {
 	jq, err := NewJQ(".")
 	ok(t, err)
+	defer jq.Close()
+
 	equals(t, ".", jq.program)
 }
 
 func TestTransform(t *testing.T) {
 	jq, err := NewJQ(".")
 	ok(t, err)
+	defer jq.Close()
 
 	jq.HandleJson("1")
 	equals(t, true, jq.Next())
@@ -55,6 +58,7 @@ func TestTransform(t *testing.T) {
 func TestTransformArray(t *testing.T) {
 	jq, err := NewJQ(".[]")
 	ok(t, err)
+	defer jq.Close()
 
 	jq.Handle([]int{1, 2, 3})
 
@@ -73,6 +77,7 @@ func TestTransformArray(t *testing.T) {
 func TestTransformArrayJson(t *testing.T) {
 	jq, err := NewJQ(".[]")
 	ok(t, err)
+	defer jq.Close()
 
 	jq.HandleJson("[1, 2, 3]")
 
@@ -91,7 +96,9 @@ func TestTransformArrayJson(t *testing.T) {
 // TODO KIND_INVALID
 
 func assertJsonParsed(t *testing.T, expected interface{}, json string) {
-	result := jvToGo(parseJson(json))
+	jv := parseJson(json)
+	result := jvToGo(jv)
+	freeJv(jv)
 	equals(t, expected, result)
 }
 
@@ -134,7 +141,9 @@ func TestJVObject(t *testing.T) {
 }
 
 func assertGoJvConversion(t *testing.T, expected interface{}, value interface{}) {
-	actual := jvToGo(goToJv(value))
+	jv := goToJv(value)
+	actual := jvToGo(jv)
+	freeJv(jv)
 	equals(t, expected, actual)
 }
 

@@ -35,6 +35,7 @@ func (jq *JQ) HandleJson(text string) {
 
 func (jq *JQ) Next() bool {
 	// FIXME this raises assertion if called before start()
+	freeJv(jq.lastValue)
 	jq.lastValue = jq.next()
 	return isValid(jq.lastValue)
 }
@@ -45,6 +46,11 @@ func (jq *JQ) Value() interface{} {
 
 func (jq *JQ) ValueJson() string {
 	return dumpJson(jq.lastValue)
+}
+
+func (jq *JQ) Close() {
+	jq.teardown()
+	freeJv(jq.lastValue)
 }
 
 // JQ APIs
@@ -75,7 +81,7 @@ func parseJson(value string) C.jv {
 func dumpJson(jv C.jv) string {
 	strJv := C.jv_dump_string(jv, 0)
 	result := C.jv_string_value(strJv)
-	C.jv_free(strJv)
+	freeJv(strJv)
 	return C.GoString(result)
 }
 
@@ -164,6 +170,10 @@ func jvToGo(value C.jv) interface{} {
 	default:
 		return errors.New("unknown type")
 	}
+}
+
+func freeJv(jv C.jv) {
+	C.jv_free(jv)
 }
 
 func isValid(jv C.jv) bool {
