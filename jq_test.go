@@ -93,6 +93,25 @@ func TestTransformArrayJson(t *testing.T) {
 	equals(t, false, jq.Next())
 }
 
+func TestTransformArrayJsonString(t *testing.T) {
+	jq, err := NewJQ(".[]")
+	ok(t, err)
+	defer jq.Close()
+
+	jq.HandleJson("[[1], [2], [3]]")
+
+	equals(t, true, jq.Next())
+	equals(t, "[1]", jq.ValueJson())
+
+	equals(t, true, jq.Next())
+	equals(t, "[2]", jq.ValueJson())
+
+	equals(t, true, jq.Next())
+	equals(t, "[3]", jq.ValueJson())
+
+	equals(t, false, jq.Next())
+}
+
 // TODO KIND_INVALID
 
 func assertJsonParsed(t *testing.T, expected interface{}, json string) {
@@ -264,4 +283,23 @@ func TestJVFromGoObject(t *testing.T) {
 func TestJVFromGoIntPointer(t *testing.T) {
 	expected := 1
 	assertGoJvConversion(t, expected, &expected)
+}
+
+// JSON
+
+func TestDumpJSONRefCount(t *testing.T) {
+	text := "{\"foo\":1}"
+	jv := parseJson(text)
+
+	// check that dumpJson keeps the same refcount
+	// and that repeated use on the same value doesn't crash
+	equals(t, 1, refcount(jv))
+	equals(t, text, dumpJson(jv))
+	equals(t, text, dumpJson(jv))
+	equals(t, 1, refcount(jv))
+
+	// afterward, we should be able to free it and the refcount
+	// decreases to 0
+	freeJv(jv)
+	equals(t, 0, refcount(jv))
 }

@@ -80,10 +80,15 @@ func parseJson(value string) C.jv {
 }
 
 func dumpJson(jv C.jv) string {
+	jv = C.jv_copy(jv)
 	strJv := C.jv_dump_string(jv, 0)
 	result := C.jv_string_value(strJv)
 	freeJv(strJv)
 	return C.GoString(result)
+}
+
+func refcount(jv C.jv) int {
+	return int(C.jv_get_refcnt(jv))
 }
 
 func goToJv(v interface{}) C.jv {
